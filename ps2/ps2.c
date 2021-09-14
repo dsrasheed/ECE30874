@@ -11,7 +11,7 @@
 #else
 // TODO: Ask what headers should be for them
 #include <GL/glew.h>
-#include <GLUT/gl.h>
+#include <GL/gl.h>
 #include <GL/glut.h>
 #endif
 
