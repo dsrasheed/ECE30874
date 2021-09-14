@@ -2,7 +2,7 @@ build:
 	@g++ -o ps2 ps2.c -framework OpenGL -framework GLUT -lglew
 
 build-linux:
-	@g++ -o ps2 ps2.c -lGL -lglut -lGLEW
+	@g++ -o ps2 ps2.c -lglut -lGLEW
 
 clean:
 	-@rm ps2
