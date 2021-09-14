@@ -7,8 +7,7 @@
 #include <OpenGL/gl.h>
 #include <GLUT/glut.h>
 #else
-#include <gl.h>
-#include <glut.h>
+#include <GL/glut.h>
 #endif
 
 class VertexArray {

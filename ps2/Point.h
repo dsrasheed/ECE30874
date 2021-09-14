@@ -8,7 +8,7 @@
 #define GL_SILENCE_DEPRECATION
 #include <GLUT/glut.h>
 #else
-#include <glut.h>
+#include <GL/glut.h>
 #endif
 
 #define PRETTY_MUCH_ZERO 1e-20

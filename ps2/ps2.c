@@ -10,8 +10,8 @@
 #include <GLUT/glut.h>
 #else
 // TODO: Ask what headers should be for them
-#include <gl.h>
-#include <glut.h>
+#include <GL/glew.h>
+#include <GL/glut.h>
 #endif
 
 #include "util.h"
