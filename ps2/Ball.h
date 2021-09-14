@@ -8,6 +8,7 @@
 #include <GLUT/glut.h>
 #else
 // TODO: Ask what headers should be for them
+#include <GL/gl.h>
 #include <GL/glut.h>
 #endif
 

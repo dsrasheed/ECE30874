@@ -11,6 +11,7 @@
 #else
 // TODO: Ask what headers should be for them
 #include <GL/glew.h>
+#include <GLUT/gl.h>
 #include <GL/glut.h>
 #endif
 
@@ -257,7 +258,11 @@ void processKey(unsigned char key, int x, int y) {
 
 void initGLUT(int* argc, char** argv) {
   glutInit(argc, argv);
-  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_3_2_CORE_PROFILE);
+  #ifdef __APPLE__
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_3_2_CORE_PROFILE);
+  #else
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+  #endif
   glutInitWindowSize(SCR_WIDTH, SCR_HEIGHT);
   glutCreateWindow("example window");
   if (glewInit() != GLEW_OK) exit(0);
