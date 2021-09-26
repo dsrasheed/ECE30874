@@ -1,0 +1,32 @@
+4
+resources/cube.obj
+1 0 0
+0 1 0
+0 0 1
+-10 -10 0
+
+1 0 0
+
+resources/pyramid.obj
+1 0 0
+0 1 0
+0 0 1
+-7 -7 0
+
+0 1 0
+
+resources/box.obj
+1 0 0
+0 1 0
+0 0 1
+-3 -7 0
+
+0 0 1
+
+resources/floor.obj
+1 0 0
+0 1 0
+0 0 1
+0 0 -2.0
+
+.7 .7 .7

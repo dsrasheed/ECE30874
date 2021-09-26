@@ -1,6 +1,7 @@
 #ifndef __POINT_H__
 #define __POINT_H__
 
+#include <iostream>
 #include <vector>
 #include <math.h>
 
@@ -81,6 +82,11 @@ class Vector {
 				ret = ret / norm;
 			}
 			return ret;
+		}
+
+		void print()
+		{
+			std::cout << "<" << x << ", "<< y << ">";
 		}
 };
 

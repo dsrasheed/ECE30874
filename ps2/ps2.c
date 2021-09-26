@@ -26,7 +26,8 @@
 #define SCR_HEIGHT 800
 #define FPS        30
 #define BALL_FRAC_ERROR 0.01
-#define GRAVITY    0.001
+#define GRAVITY    9.8
+#define TIMESTEP   1.0 / FPS
 
 // Polygon Data
 enum PolyState {
@@ -42,6 +43,7 @@ enum BallState {
   BALL_NONE, BALL_DRAW, BALL_DONE
 };
 BallState ball_state;
+Vector acc = Vector(0, GRAVITY);
 Vector ball_velocity;
 Ball ball;
 
@@ -80,6 +82,19 @@ void display(void) {
   glutSwapBuffers();
 }
 
+bool inPolygon(Ray r) {
+  int nIntersections = 0;
+  for (int i = 0; i < poly_lines.size(); i++) {
+    Point p = intersection(r, poly_lines[i]);
+    if (!p.invalid) {
+      nIntersections++;
+    }
+  }
+
+  // If odd number of intersection points, ball is outside of polygon
+  return nIntersections % 2 == 1;
+}
+
 void animate(int value) {
   if (state != ANIMATING)
       return;
@@ -88,7 +103,7 @@ void animate(int value) {
   std::vector<Point> intersections;
   std::vector<int> line_indices;
   for (int i = 0; i < poly_lines.size(); i++) {
-    Point p = intersection(Ray(ball.getCenter(), ball_velocity), poly_lines[i]);
+    Point p = intersection(Ray(ball.getCenter(), ball_velocity * TIMESTEP), poly_lines[i]);
     if (!p.invalid) {
       intersections.push_back(p);
       line_indices.push_back(i);
@@ -101,13 +116,19 @@ void animate(int value) {
     return;
   }
 
+  /*if (!inPolygon(Ray(ball.getCenter(), ball_velocity * TIMESTEP)) && !ball_velocity.isZeroVector()) {
+    state = READY;
+    return;
+  }*/
+
   // Determine the closest line that intersects with the path of the ball.
   float smallest_norm = 40000000;
   int line_index = -1;
   for (int i = 0; i < intersections.size(); i++) {
     Point p = intersections[i];
     Vector v =  p - ball.getCenter();
-    float norm = abs(v.dot(poly_lines[line_indices[i]].vector.normalVector()));
+    //float norm = abs(v.dot(poly_lines[line_indices[i]].vector.normalVector()));
+    float norm = v.norm();
     if (norm < smallest_norm) {
       smallest_norm = norm;
       line_index = line_indices[i];
@@ -115,20 +136,73 @@ void animate(int value) {
   }
 
   // If the ball has collided with that line, calculate the ball's new velocity
-  if (ball_velocity.norm() > smallest_norm || smallest_norm <= ball.getRadius()) {
-    LineSegment seg = poly_lines[line_index];
-    Vector norm = seg.vector.normalVector();
-    ball_velocity = ball_velocity - (norm * (norm.dot(ball_velocity))) * 2;
+  LineSegment closestLine = poly_lines[line_index];
+  Vector n0 = closestLine.vector.normalVector();
+  float dist = ((ball_velocity - acc * TIMESTEP) * TIMESTEP).norm();
+  if (smallest_norm <= (ball.getRadius() + 0.01)) {
+    ball_velocity = ball_velocity - (n0 * (n0.dot(ball_velocity))) * 2;
+    ball.setCenter(ball.getCenter() + ball_velocity * TIMESTEP);
   }
+  else if (dist - smallest_norm > 0) {
+    ball.setCenter(ball.getCenter() + (ball_velocity * (1 / ball_velocity.norm())) * (smallest_norm - ball.getRadius()));
+  }
+  else {
+    ball_velocity = ball_velocity - acc * TIMESTEP;
+    ball.setCenter(ball.getCenter() + ball_velocity * TIMESTEP);
+  }
+
+  /*bool intersection = false;
+  for (int i = 0; i < poly_lines.size(); i++) {
+    LineSegment segment = poly_lines[i];
+    Vector v = segment.point - ball.getCenter();
+    Vector norm = segment.vector.normalVector();
+    float perp_dist = v.dot(norm);
+
+    // If on the next time step, you will be outside that line, you need
+    // to collide with it now. Calculate the projection on the norm. Before and after
+    // applying the velocity. Add the two norms to each other. if the new norm is less than
+    // either of the norms, then the ball is outside the line.
+    Point p1 = ball.getCenter() + (ball_velocity - acc * TIMESTEP) * TIMESTEP;
+    Vector v1 = segment.point - p1;
+    float dist2 = v1.dot(norm);
+
+    bool willcross = !inPolygon(Ray(ball.getCenter() + ((ball_velocity - (acc * TIMESTEP)) * TIMESTEP), ball_velocity - (acc * TIMESTEP)));
+    std::cout << willcross << std::endl;
+    if ((abs(perp_dist) <= ball.getRadius()) || willcross) {
+      std::cout << "INDEX: " << i << std::endl;
+      std::cout << "IN HERE" << std::endl << "NORM: ";
+      norm.print();
+      std::cout << std::endl;
+      std::cout << "DOT: " << norm.dot(ball_velocity) << std::endl;
+      ball_velocity = ball_velocity - norm * (norm.dot(ball_velocity)) * 2;
+      ball_velocity.print();
+      ball.setCenter(ball.getCenter() + ball_velocity * TIMESTEP);
+      std::cout << "END" << std::endl;
+      intersection = true;
+      break;
+    }
+  }*/
+  
 
   std::vector<Point>().swap(intersections);
   std::vector<int>().swap(line_indices);
   
-  ball_velocity = ball_velocity - Vector(0, GRAVITY);
-  ball.setCenter(ball.getCenter() + ball_velocity);
+  /*Vector acc = Vector(0, GRAVITY);
+  std::cout << "Before Update: ";
+  ball_velocity.print();
+  std::cout << std::endl;
+
+  ball_velocity = ball_velocity - acc * TIMESTEP;
+  std::cout << "After Update: ";
+  ball_velocity.print();
+  std::cout << std::endl;*/
+  /*if (!intersection) {
+      ball_velocity = ball_velocity - acc * TIMESTEP;
+      ball.setCenter(ball.getCenter() + ball_velocity * TIMESTEP);
+  }*/
 
   glutPostRedisplay();
-  glutTimerFunc(seconds2millis(1.0 / FPS), animate, 0);
+  glutTimerFunc(seconds2millis(TIMESTEP), animate, 0);
 }
 
 void deletePolygon() {
@@ -240,7 +314,7 @@ void processKey(unsigned char key, int x, int y) {
     case 'a':
       if (state == READY) {
           state = ANIMATING;
-          glutTimerFunc(seconds2millis(1.0 / FPS), animate, 0);
+          glutTimerFunc(seconds2millis(TIMESTEP), animate, 0);
       }
       break;
     case 's':
