@@ -78,7 +78,8 @@ void processKey(unsigned char key, int x, int y) {
 
 void display() {
   glClearColor(1.0, 1.0, 1.0, 1.0);
-  glClear(GL_COLOR_BUFFER_BIT);
+  glEnable(GL_DEPTH_TEST);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   cam->render(*scene);
   glFlush();
   glutSwapBuffers();
@@ -87,9 +88,9 @@ void display() {
 void initGLUT(int* argc, char** argv) {
   glutInit(argc, argv);
   #ifdef __APPLE__
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_3_2_CORE_PROFILE);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_3_2_CORE_PROFILE);
   #else
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
   #endif
   glutInitWindowSize(SCR_WIDTH, SCR_HEIGHT);
   glutCreateWindow("ECE 30874 Problem Set 3");
@@ -97,13 +98,14 @@ void initGLUT(int* argc, char** argv) {
 
   // initialize objects
   s = new Shader("resources/shader.vs", "resources/shader.fs");
-  cam = new Camera(45, (float) SCR_WIDTH / SCR_HEIGHT, 1, 40, *s);
+  cam = new Camera(45, (float) SCR_WIDTH / SCR_HEIGHT, 1, 100, *s);
   scene = new Scene();
   scene->readFromFile("resources/scene1-3");
 
   // callbacks
   glutDisplayFunc(display);
-  glutKeyboardUpFunc(processKey);
+  //glutKeyboardUpFunc(processKey);
+  glutKeyboardFunc(processKey);
 
   glutMainLoop();
 }

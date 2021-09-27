@@ -138,7 +138,7 @@ void Camera::render(const Scene& scene) {
 
         v.use();
         s.use();
-        glDrawArrays(GL_TRIANGLES, 0, objs[i].getNumTriangles() * 3);
+        glDrawElements(GL_TRIANGLES, objs[i].getNumTriangles() * 3, GL_UNSIGNED_INT, 0);
         v.free();
         s.unuse();
     }
