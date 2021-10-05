@@ -18,7 +18,7 @@ test_%:
 	@rm tmp
 
 zip:
-	zip ps3-drasheed.zip *
+	zip -r ps3-drasheed.zip * -x *.zip
 
 clean:
 	-@rm ps3
