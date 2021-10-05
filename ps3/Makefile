@@ -6,10 +6,10 @@ build-linux:
 
 run:
 	-@export MallocStackLogging=1
-	@leaks -atExit -- ./ps3
+	@leaks -atExit -- ./ps3 resources/scene1-3 resources/camera1-3
 
 run-linux:
-	@./ps3
+	@./ps3 resources/scene1-3 resources/camera1-3
 
 test_%:
 	-@g++ -o tmp test/$@.cpp src/*.cpp -I./include -framework OpenGL -framework GLUT -lglew

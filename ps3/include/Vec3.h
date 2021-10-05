@@ -18,6 +18,8 @@ class Vec3 {
 
     Vec3& operator=(const Vec3& v);
 
+    Vec3  operator-() const;
+
     friend Vec3 operator*(const Vec3& v, const float scalar);
 
     friend Vec3 operator*(const float scalar, const Vec3& v);

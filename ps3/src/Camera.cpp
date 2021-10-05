@@ -1,4 +1,7 @@
 #include <math.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
 #include "util.h"
 #include "Camera.h"
@@ -25,6 +28,27 @@ Camera::Camera(float fov, float asp, float n, float f, Shader s): fov(fov), asp(
     lookat(Vec3(0, -40, 0), Vec3(0, 0, 0), Vec3(0, 0, 1));
 }
 
+Camera::Camera(const char* filename, float asp, Shader s): asp(asp), s(s) {
+    std::ifstream f(filename);
+    if (f.is_open()) {
+        f >> fov >> n >> this->f;
+        float x, y, z;
+        f >> x >> y >> z;
+        Vec3 eye(x, y, z);
+        f >> x >> y >> z;
+        Vec3 center(x, y, z);
+        f >> x >> y >> z;
+        Vec3 up(x, y, z);
+        lookat(eye, center, up);
+    }
+    else {
+        std::stringstream ss;
+        ss << "Unable to open camera configuration file " << filename;
+        throw ss.str();
+    }
+    f.close();
+}
+
 void Camera::lookat(const Vec3& eye, const Vec3& center, const Vec3& up) {
     cam_eye = eye;
     cam_dir = (eye - center).normalize();
@@ -41,29 +65,29 @@ void Camera::tilt(const float degrees) {
     float theta = deg2rad(degrees);
     Vec3 dir = cam_dir;
     Vec3 up  = cam_up;
-    cam_dir = cos(theta) * dir - sin(theta) * up;
-    cam_up  = sin(theta) * dir + cos(theta) * up;
+    cam_dir = (cos(theta) * dir - sin(theta) * up).normalize();
+    cam_up  = (sin(theta) * dir + cos(theta) * up).normalize();
 }
 
 void Camera::pan(const float degrees) {
     float theta = deg2rad(degrees);
     Vec3 right = cam_right;
     Vec3 dir = cam_dir;
-    cam_right = cos(theta) * right - sin(theta) * dir;
-    cam_dir   = sin(theta) * right + cos(theta) * dir;
+    cam_right = (cos(theta) * right - sin(theta) * dir).normalize();
+    cam_dir   = (sin(theta) * right + cos(theta) * dir).normalize();
 }
 
 void Camera::roll(const float degrees) {
     float theta = deg2rad(degrees);
     Vec3 up = cam_up;
     Vec3 right = cam_right;
-    cam_right = cos(theta) * right - sin(theta) * up;
-    cam_up    = sin(theta) * right + cos(theta) * up;
+    cam_right = (cos(theta) * right - sin(theta) * up).normalize();
+    cam_up    = (sin(theta) * right + cos(theta) * up).normalize();
 }
 
 // Zoom
 void Camera::zoom(float f) {
-    fov *= f;
+    fov = fmin(fov * f, 45.0);
 }
 
 // Render helpers
@@ -144,5 +168,30 @@ void Camera::render(const Scene& scene) {
     }
 }
 
+Vec3 Camera::get_eye() const {
+    return cam_eye;
+}
+
+Vec3 Camera::get_dir() const {
+    return cam_dir;
+}
+
+Vec3 Camera::get_up() const {
+    return cam_up;
+}
+
+Vec3 Camera::get_right() const {
+    return cam_right;
+}
+
 Camera::~Camera() {
+}
+
+std::ostream& operator<<(std::ostream& o, const Camera& c) {
+    o << "Cam Eye  : " << c.cam_eye.normalize()   << ", Norm: " << c.cam_eye.norm()   << std::endl
+      << "Cam Dir  : " << c.cam_dir   << ", Norm: " << c.cam_dir.norm()   << std::endl
+      << "Cam Up   : " << c.cam_up    << ", Norm: " << c.cam_up.norm()    << std::endl
+      << "Cam Right: " << c.cam_right << ", Norm: " << c.cam_right.norm() << std::endl
+      << "-----------------------" << std::endl;
+    return o;
 }

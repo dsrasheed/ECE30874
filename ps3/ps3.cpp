@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdlib.h>
+#include <string>
 
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
@@ -71,6 +72,22 @@ void processKey(unsigned char key, int x, int y) {
       rstep = -rstep;
       fstep = 1.0 / fstep;
       break;
+    case 'w':
+      cam->translate(-cam->get_dir());
+      glutPostRedisplay();
+      break;
+    case 's':
+      cam->translate(cam->get_dir());
+      glutPostRedisplay();
+      break;
+    case 'a':
+      cam->translate(-cam->get_right());
+      glutPostRedisplay();
+      break;
+    case 'd':
+      cam->translate(cam->get_right());
+      glutPostRedisplay();
+      break;
     case 'q':
       exitProgram(0);
   }
@@ -86,6 +103,11 @@ void display() {
 }
 
 void initGLUT(int* argc, char** argv) {
+  if (*argc != 3) {
+    std::cout << "Usage: ps3 scene-file camera-file" << std::endl;
+    return;
+  }
+
   glutInit(argc, argv);
   #ifdef __APPLE__
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_3_2_CORE_PROFILE);
@@ -97,10 +119,16 @@ void initGLUT(int* argc, char** argv) {
   if (glewInit() != GLEW_OK) exit(0);
 
   // initialize objects
-  s = new Shader("resources/shader.vs", "resources/shader.fs");
-  cam = new Camera(45, (float) SCR_WIDTH / SCR_HEIGHT, 1, 100, *s);
-  scene = new Scene();
-  scene->readFromFile("resources/scene1-3");
+  try {
+    s = new Shader("resources/shader.vs", "resources/shader.fs");
+    cam = new Camera(argv[2], (float) SCR_WIDTH / SCR_HEIGHT, *s);
+    scene = new Scene();
+    scene->readFromFile(argv[1]);
+  }
+  catch (const std::string err) {
+    std::cout << err << std::endl;
+    exitProgram(0);
+  }
 
   // callbacks
   glutDisplayFunc(display);

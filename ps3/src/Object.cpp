@@ -36,7 +36,7 @@ void Object::readFromFile(const char* filename) {
     }
     else {
         std::stringstream ss;
-        ss << "Unable to open object file " << filename << std::endl;
+        ss << "Unable to open object file " << filename;
         throw ss.str();
     }
     f.close();

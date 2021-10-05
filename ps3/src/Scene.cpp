@@ -1,11 +1,14 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <string.h>
 
 #include "Object.h"
 #include "Scene.h"
 #include "Mat3.h"
+
+#define MAX_FILENAME_LEN 260
 
 Scene::Scene() {
     objects = nullptr;
@@ -17,14 +20,14 @@ void Scene::readFromFile(const char* filename) {
         f >> nObjs;
 
         this->objects = new Object[nObjs];
-        char filename[260];
+        char filename[MAX_FILENAME_LEN];
         Mat3 fn1;
         Vec3 tr1;
         Vec3 color;
         try {
             for (int i = 0; i < nObjs; i++) {
                 do {
-                    f.getline(filename, 260);
+                    f.getline(filename, MAX_FILENAME_LEN);
                 } while (strlen(filename) == 0);
                 f >> fn1 >> tr1 >> color;
                 
@@ -33,13 +36,15 @@ void Scene::readFromFile(const char* filename) {
                 this->objects[i].setColor(color);
             }
         } catch (const std::string s) {
-            std::cout << s << std::endl;
             delete[] this->objects;
             this->objects = nullptr;
             nObjs = 0;
+            throw s;
         }
     } else {
-        throw "Unable to open file";
+        std::stringstream ss;
+        ss << "Unable to open scene file " << filename;
+        throw ss.str();
     }
     f.close();
 }
