@@ -87,7 +87,7 @@ void Camera::roll(const float degrees) {
 
 // Zoom
 void Camera::zoom(float f) {
-    fov = fmin(fov * f, 45.0);
+    fov = fmin(fov * f, 179.0);
 }
 
 // Render helpers
