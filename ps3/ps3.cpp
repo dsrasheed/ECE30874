@@ -89,6 +89,7 @@ void processKey(unsigned char key, int x, int y) {
       glutPostRedisplay();
       break;
     case 'q':
+      glutLeaveMainLoop();
       exitProgram(0);
   }
 }
