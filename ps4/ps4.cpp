@@ -58,6 +58,10 @@ Scene* scene;
 // Keyboard Control
 Camera* focused_cam;
 
+// Settings
+bool solid = false;
+bool persp = false;
+
 void exitProgram(int signal) {
   delete cam1;
   delete cam2;
@@ -133,50 +137,50 @@ void processKey(unsigned char key, int x, int y) {
 void menu(int option) {
   switch (option) {
     case 1:
-      cam1->setObjectDisplayMode(Camera::WIREFRAME);
-      cam2->setObjectDisplayMode(Camera::WIREFRAME);
-      glutChangeToMenuEntry(1, "Solid", 2);
+      if (solid) {
+        cam1->setObjectDisplayMode(Camera::WIREFRAME);
+        cam2->setObjectDisplayMode(Camera::WIREFRAME);
+      }
+      else {
+        cam1->setObjectDisplayMode(Camera::SOLID);
+        cam2->setObjectDisplayMode(Camera::SOLID);
+      }
+      solid = !solid;
       break;
     case 2:
-      cam1->setObjectDisplayMode(Camera::SOLID);
-      cam2->setObjectDisplayMode(Camera::SOLID);
-      glutChangeToMenuEntry(1, "Wireframe", 1);
+      if (persp) {
+        cam1->setProjectionType(Camera::ORTHO);
+        cam2->setProjectionType(Camera::ORTHO);
+      }
+      else {
+        cam1->setProjectionType(Camera::PERSPECTIVE);
+        cam2->setProjectionType(Camera::PERSPECTIVE);
+      }
+      persp = !persp;
       break;
     case 3:
-      cam1->setProjectionType(Camera::ORTHO);
-      cam2->setProjectionType(Camera::ORTHO);
-      glutChangeToMenuEntry(2, "Perspective", 4);
+      if (focused_cam == cam1)
+        focused_cam = cam2;
+      else
+        focused_cam = cam1;
       break;
     case 4:
-      cam1->setProjectionType(Camera::PERSPECTIVE);
-      cam2->setProjectionType(Camera::PERSPECTIVE);
-      glutChangeToMenuEntry(2, "Orthographic", 3);
+      cam2->lookat(Vec3(0.0, 0.0, 120.0), Vec3(0.0, 0.0, 0.0), Vec3(-1.0, 0.0, 0.0));
       break;
     case 5:
-      focused_cam = cam2;
-      glutChangeToMenuEntry(3, "Keyboard Ctrl Cam 1", 6);
+      cam2->lookat(Vec3(0.0, 0.0, -120.0), Vec3(0.0, 0.0, 0.0), Vec3(-1.0, 0.0, 0.0));
       break;
     case 6:
-      focused_cam = cam1;
-      glutChangeToMenuEntry(3, "Keyboard Ctrl Cam 2", 5);
+      cam2->lookat(Vec3(0.0, 120.0, 0.0), Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 1.0));
       break;
     case 7:
-      cam2->lookat(Vec3(0.0, 0.0, 60.0), Vec3(0.0, 0.0, 0.0), Vec3(-1.0, 0.0, 0.0));
+      cam2->lookat(Vec3(0.0, -120.0, 0.0), Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 1.0));
       break;
     case 8:
-      cam2->lookat(Vec3(0.0, 0.0, -60.0), Vec3(0.0, 0.0, 0.0), Vec3(-1.0, 0.0, 0.0));
+      cam2->lookat(Vec3(120.0, 0.0, 0.0), Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 1.0));
       break;
     case 9:
-      cam2->lookat(Vec3(0.0, 60.0, 0.0), Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 1.0));
-      break;
-    case 10:
-      cam2->lookat(Vec3(0.0, -60.0, 0.0), Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 1.0));
-      break;
-    case 11:
-      cam2->lookat(Vec3(60.0, 0.0, 0.0), Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 1.0));
-      break;
-    case 12:
-      cam2->lookat(Vec3(-60.0, 0.0, 0.0), Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 1.0));
+      cam2->lookat(Vec3(-120.0, 0.0, 0.0), Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 1.0));
       break;
   }
   glutPostRedisplay();
@@ -280,15 +284,15 @@ void initGLUT(int* argc, char** argv) {
 
   // menu
   glutCreateMenu(menu);
-  glutAddMenuEntry("Wireframe", 1);
-  glutAddMenuEntry("Orthographic", 3);
-  glutAddMenuEntry("Keyboard Ctrl Camera 2", 5);
-  glutAddMenuEntry("Cam 2 +Z", 7);
-  glutAddMenuEntry("Cam 2 -Z", 8);
-  glutAddMenuEntry("Cam 2 +Y", 9);
-  glutAddMenuEntry("Cam 2 -Y", 10);
-  glutAddMenuEntry("Cam 2 +X", 11);
-  glutAddMenuEntry("Cam 2 -X", 12);
+  glutAddMenuEntry("Toggle Wireframe/Solid", 1);
+  glutAddMenuEntry("Toggle Perspective/Orthographic", 2);
+  glutAddMenuEntry("Toggle Keyboard Ctrl Camera 1/2", 3);
+  glutAddMenuEntry("Cam 2 +Z", 4);
+  glutAddMenuEntry("Cam 2 -Z", 5);
+  glutAddMenuEntry("Cam 2 +Y", 6);
+  glutAddMenuEntry("Cam 2 -Y", 7);
+  glutAddMenuEntry("Cam 2 +X", 8);
+  glutAddMenuEntry("Cam 2 -X", 9);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
 
   glutMainLoop();
