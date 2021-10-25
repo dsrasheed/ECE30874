@@ -40,11 +40,11 @@ void main() {
 
         V = normalize(eye - aPos);
         if (phong) {
-            R = 2 * dot(L, bNorm) * bNorm - L;
+            R = normalize(2 * dot(L, bNorm) * bNorm - L);
             specular = pow(max(0, dot(R, V)), material.p);
         }
         else {
-            H = normalize(normalize(L) + normalize(V));
+            H = normalize(L + V);
             specular = pow(max(0, dot(H, bNorm)), material.p);
         }
 
@@ -53,5 +53,5 @@ void main() {
         color += material.s * lights[i].s * specular * attenuation;
     }
 
-    FragColor = vec4(pow(color, vec3(1.0/2.2)), 1.0);
+    FragColor = vec4(pow(color, vec3(1.0/2.2)), 0.0);
 }
