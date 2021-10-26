@@ -33,6 +33,7 @@ Camera* cam1;
 Scene* scene;
 
 // Settings
+bool persp = true;
 bool flatShading = true;
 bool phong = true;
 
@@ -120,6 +121,15 @@ void menu(int option) {
       }
       phong = !phong;
       break;
+    case 3:
+      if (persp) {
+        cam1->setProjectionType(Camera::ORTHO);
+      }
+      else {
+        cam1->setProjectionType(Camera::PERSPECTIVE);
+      }
+      persp = !persp;
+      break;
   }
   glutPostRedisplay();
 }
@@ -172,6 +182,7 @@ void initGLUT(int* argc, char** argv) {
   glutCreateMenu(menu);
   glutAddMenuEntry("Toggle Smooth/Flat Shading", 1);
   glutAddMenuEntry("Toggle Phong/Blinn Shading", 2);
+  glutAddMenuEntry("Toggle Persp/Ortho Shading", 3);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
 
   glutMainLoop();
