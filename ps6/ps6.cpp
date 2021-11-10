@@ -136,20 +136,10 @@ void menu(int option) {
   glutPostRedisplay();
 }
 
-uint32_t c_buff[SCR_WIDTH * SCR_HEIGHT];
-
 void display() {
-  for (int i = 0; i < SCR_WIDTH * SCR_HEIGHT; i++) {
-    c_buff[i] = 0xffffffff;
-  }
-
   // Render to custom framebuffer
-  //cam1->renderCPU(*scene);
-  // Read the pixels from the framebuffer
-  //glReadPixels(0, 0, SCR_WIDTH, SCR_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, c_buff);
-
-  glUseProgram(0);
-  glDrawPixels(SCR_WIDTH, SCR_HEIGHT, GL_RGBA, GL_UNSIGNED_INT, c_buff);
+  cam1->renderCPU(*scene);
+  glDrawPixels(SCR_WIDTH, SCR_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, cam1->getFrameBuffer().color);
 
   // Execute all commands
   glFlush();
@@ -177,13 +167,11 @@ void initGLUT(int* argc, char** argv) {
     // Cameras
     cam1_shader = new Shader("resources/shader.vs", "resources/shader.fs");
     cam1 = new Camera(argv[2], (float) SCR_WIDTH / SCR_HEIGHT, *cam1_shader);
+    cam1->setFrameBuffer(SCR_WIDTH, SCR_HEIGHT);
 
     // Scene
     scene = new Scene();
     scene->readFromFile(argv[1]);
-
-    // FrameBuffer
-    //fb = new FrameBuffer(SCR_WIDTH, SCR_HEIGHT);
   }
   catch (const std::string err) {
     std::cout << err << std::endl;

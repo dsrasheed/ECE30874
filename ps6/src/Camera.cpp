@@ -12,6 +12,7 @@
 #include "Mat3.h"
 #include "Vec3.h"
 #include "FrameBuffer.h"
+#include "rgba.h"
 
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
@@ -187,8 +188,15 @@ void Camera::setSpecType(SpecularType type) {
 
 // Rendering
 void Camera::renderCPU(const Scene& scene) {
-    glClearColor(1.0, 1.0, 1.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if (fb.w == -1 || fb.h == -1)
+        throw "Call setFrameBuffer before calling renderCPU";
+
+    int nPixels = fb.w * fb.h;
+    
+    // Clear
+    for (int i = 0; i < nPixels; i++) {
+        fb.color[i] = RGBA(1, 1, 1).pack();
+    }
 }
 
 void Camera::render(const Scene& scene) { 
@@ -277,6 +285,14 @@ void Camera::genFrustumVertices(Object& frustum) {
     0, 5, 1
   };
   frustum.setVertices(8, vertices, 8, triangles);
+}
+
+void Camera::setFrameBuffer(int w, int h) {
+    fb = FrameBuffer(w, h);
+}
+
+const FrameBuffer& Camera::getFrameBuffer() const {
+    return fb;
 }
 
 Vec3 Camera::get_eye() const {

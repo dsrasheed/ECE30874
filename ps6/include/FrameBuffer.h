@@ -16,17 +16,18 @@
 
 class FrameBuffer {
     public:
-        uint8_t* color;
+        int w, h;
+        uint32_t* color;
         float* depth;
 
-        FrameBuffer(int w, int h) {
-            color = new uint8_t[w * h * 4]();
-            depth = new float[w * h]();
+        FrameBuffer(): w(-1), h(-1) {
+            color = nullptr;
+            depth = nullptr;
         }
 
-        ~FrameBuffer()  {
-            delete[] color;
-            delete[] depth;
+        FrameBuffer(int w, int h): w(w), h(h) {
+            color = new uint32_t[w * h]();
+            depth = new float[w * h]();
         }
 };
 

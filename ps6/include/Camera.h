@@ -7,6 +7,7 @@
 #include "Vec3.h"
 #include "Mat3.h"
 #include "Scene.h"
+#include "FrameBuffer.h"
 
 class Camera {
     public:
@@ -19,6 +20,7 @@ class Camera {
         float asp;
         float n;
         float f;
+        FrameBuffer fb;
         Shader s;
         Vec3 cam_eye;
         Vec3 cam_dir;
@@ -53,6 +55,8 @@ class Camera {
         void setProjectionType(ProjectionType type);
         void setShadingType(ShadingType type);
         void setSpecType(SpecularType type);
+        void setFrameBuffer(int w, int h);
+        const FrameBuffer& getFrameBuffer() const;
         Vec3 get_eye() const;
         Vec3 get_dir() const;
         Vec3 get_up() const;
