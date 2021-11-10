@@ -11,6 +11,8 @@
 #include "Scene.h"
 #include "Mat3.h"
 #include "Vec3.h"
+#include "Mat4.h"
+#include "Vec4.h"
 #include "FrameBuffer.h"
 #include "rgba.h"
 
@@ -196,6 +198,50 @@ void Camera::renderCPU(const Scene& scene) {
     // Clear
     for (int i = 0; i < nPixels; i++) {
         fb.color[i] = RGBA(1, 1, 1).pack();
+    }
+
+    Mat4 rotate = Mat4(
+        cam_right[0], cam_right[1], cam_right[2], 0.0,
+        cam_up   [0], cam_up   [1], cam_up   [2], 0.0,
+        cam_dir  [0], cam_dir  [1], cam_dir  [2], 0.0,
+        0,            0,            0,            1.0
+    );
+    Mat4 translate = Mat4(
+        1, 0, 0, -cam_eye[0],
+        0, 1, 0, -cam_eye[1],
+        0, 0, 1, -cam_eye[2],
+        0, 0, 0, 1
+    )
+    float t = n * tan(deg2rad(fov/2.0));
+    float r = asp * t;
+    Mat4 proj = Mat4(
+        n / r, 0, 0, 0,
+        0, n / t, 0, 0,
+        0, 0, (n + f) / (n - f), 2 * f * n / (n - f),
+        0, 0, -1, 0
+    );
+    Mat4 view = rotate * translate;
+    Mat4 proj = Mat4(projMat);
+    Mat4 cache = proj * view;
+
+    int nObjs = scene.getNumObjects();
+    for (int i = 0; i < nObjs; i++) {
+        Object obj = scene.getObjects()[i];
+        Mat3 m = obj.getTransformMatrix();
+        Mat3 tr = obj.getTranslationVector();
+        Mat4 model = Mat4(
+            m[0][0], m[0][1], m[0][2], tr[0],
+            m[1][0], m[1][1], m[1][2], tr[1],
+            m[2][0], m[2][1], m[2][2], tr[2],
+            0.0    , 0.0    , 0.0    , 1.0,
+        );
+        
+        Vec3 verts = new Vec3[obj.getNumVertices() * 3];
+        float* data = obj.getVertices();
+        for (int i = 0; i < obj.getNumVertices(); i++) {
+            verts[i]
+        }
+        
     }
 }
 
