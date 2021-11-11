@@ -4,7 +4,6 @@
 #include "Vec3.h"
 #include "Mat3.h"
 
-
 Mat3::Mat3() : row1(Vec3()), row2(Vec3()), row3(Vec3()) {}
 
 Mat3::Mat3(float data[]) {

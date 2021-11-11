@@ -21,6 +21,8 @@ class Object {
         Material m;
         VertexArray* smoothVa;
         VertexArray* flatVa;
+        float* smooth_verts;
+        float* flat_verts;
 
         void reset();
         void genSmoothAndFlatVertices();

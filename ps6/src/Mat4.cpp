@@ -10,14 +10,14 @@ Mat4::Mat4() : row1(Vec4()), row2(Vec4()), row3(Vec4()), row4(Vec4()) {}
 Mat4::Mat4(float data[]) {
     row1 = Vec4(data[0], data[1], data[2], data[3]);
     row2 = Vec4(data[4], data[5], data[6], data[7]);
-    row3 = Vec4(data[8], data[9], data[10, data[11]);
+    row3 = Vec4(data[8], data[9], data[10], data[11]);
     row4 = Vec4(data[12], data[13], data[14], data[15]);
 }
 
 Mat4::Mat4(float v1, float v2, float v3, float v4, 
         float v5, float v6, float v7, float v8, 
         float v9, float v10, float v11, float v12,
-        float v13, float v14, float v15, float v16); {
+        float v13, float v14, float v15, float v16) {
     row1 = Vec4(v1, v2, v3, v4);
     row2 = Vec4(v5, v6, v7, v8);
     row3 = Vec4(v9, v10, v11, v12);
@@ -80,7 +80,7 @@ Mat4 operator+(const Mat4& m1, const Mat4& m2) {
     return Mat4(m1.row1.x + m2.row1.x, m1.row1.y + m2.row1.y, m1.row1.z + m2.row1.z, m1.row1.w + m2.row1.w,
         m1.row2.x + m2.row2.x, m1.row2.y + m2.row2.y, m1.row2.z + m2.row2.z, m1.row2.w + m2.row2.w,
         m1.row3.x + m2.row3.x, m1.row3.y + m2.row3.y, m1.row3.z + m2.row3.z, m1.row3.w + m2.row3.w,
-        m1.row4.x + m2.row4.x, m1.row4.y + m2.row4.y, m1.row4.z + m2.row4.z, m1.row4.w + m2.row4.w,
+        m1.row4.x + m2.row4.x, m1.row4.y + m2.row4.y, m1.row4.z + m2.row4.z, m1.row4.w + m2.row4.w
     );
 }
 
@@ -170,7 +170,7 @@ Mat4 operator*(const float scalar, Mat4& m) {
         m.row4.x * scalar,
         m.row4.y * scalar,
         m.row4.z * scalar,
-        m.row4.w * scalar,
+        m.row4.w * scalar
     );
 }
 
@@ -224,7 +224,7 @@ Mat4 operator*(const Mat4& m1, const Mat4& m2) {
         m1.row4.dot(col1),
         m1.row4.dot(col2),
         m1.row4.dot(col3),
-        m1.row4.dot(col4),
+        m1.row4.dot(col4)
     );
 }
 
@@ -232,7 +232,7 @@ std::ostream& operator<<(std::ostream& os, const Mat4& obj) {
     os << "["  << obj.row1.x << ", " << obj.row1.y << ", " << obj.row1.z << ", " << obj.row1.w << std::endl
                 << obj.row2.x << ", " << obj.row2.y << ", " << obj.row2.z << ", " << obj.row2.w << std::endl
                 << obj.row3.x << ", " << obj.row3.y << ", " << obj.row3.z << ", " << obj.row3.w << std::endl
-                << obj.row4.x << ", " << obj.row4.y << ", " << obj.row4.z << ", " << obj.row4.w << "]" << std::endl
+                << obj.row4.x << ", " << obj.row4.y << ", " << obj.row4.z << ", " << obj.row4.w << "]" << std::endl;
     return os;
 }
 

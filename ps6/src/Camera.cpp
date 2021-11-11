@@ -211,7 +211,8 @@ void Camera::renderCPU(const Scene& scene) {
         0, 1, 0, -cam_eye[1],
         0, 0, 1, -cam_eye[2],
         0, 0, 0, 1
-    )
+    );
+    Mat4 view = rotate * translate;
     float t = n * tan(deg2rad(fov/2.0));
     float r = asp * t;
     Mat4 proj = Mat4(
@@ -220,28 +221,29 @@ void Camera::renderCPU(const Scene& scene) {
         0, 0, (n + f) / (n - f), 2 * f * n / (n - f),
         0, 0, -1, 0
     );
-    Mat4 view = rotate * translate;
-    Mat4 proj = Mat4(projMat);
     Mat4 cache = proj * view;
 
     int nObjs = scene.getNumObjects();
     for (int i = 0; i < nObjs; i++) {
         Object obj = scene.getObjects()[i];
         Mat3 m = obj.getTransformMatrix();
-        Mat3 tr = obj.getTranslationVector();
+        Vec3 tr = obj.getTranslationVector();
         Mat4 model = Mat4(
             m[0][0], m[0][1], m[0][2], tr[0],
             m[1][0], m[1][1], m[1][2], tr[1],
             m[2][0], m[2][1], m[2][2], tr[2],
-            0.0    , 0.0    , 0.0    , 1.0,
+            0.0    , 0.0    , 0.0    , 1.0
         );
         
-        Vec3 verts = new Vec3[obj.getNumVertices() * 3];
-        float* data = obj.getVertices();
+        Vec4* verts = new Vec4[obj.getNumVertices() * 3];
+        Vec3* norms = new Vec3[obj.getNumVertices() * 3];
+        const float* data = obj.getVertices();
         for (int i = 0; i < obj.getNumVertices(); i++) {
-            verts[i]
+            Vec4 v = Vec4(data[i*3+0], data[i*3+1], data[i*3+2], 1.0);
+            Vec4 pos = cache * model * v;
         }
-        
+
+        delete[] verts;
     }
 }
 
