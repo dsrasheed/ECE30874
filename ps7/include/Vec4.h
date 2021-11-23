@@ -2,6 +2,7 @@
 #define __ECE30874_VEC4_H__
 
 #include <iostream>
+#include "Vec3.h"
 
 class Vec4 {
     
@@ -11,6 +12,8 @@ class Vec4 {
     Vec4();
 
     Vec4(float x, float y, float z, float w);
+
+    Vec4(Vec3 v, float w);
 
     float& operator[](int index);
 
@@ -49,6 +52,8 @@ class Vec4 {
     float norm() const;
 
     Vec4 normalize() const;
+
+    Vec3 dehomogenize() const;
 };
 
 #endif

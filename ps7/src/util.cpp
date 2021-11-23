@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cfloat>
+#include <iostream>
 
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION

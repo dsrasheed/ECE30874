@@ -50,6 +50,7 @@ class Vec3 {
 
     Vec3 normalize() const;
 
+    // BUG: Only works on declared Vec3, not ones computed in expressions
     Vec3 cross(Vec3& other) const;
 };
 

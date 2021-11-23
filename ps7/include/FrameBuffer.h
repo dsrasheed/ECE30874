@@ -29,6 +29,13 @@ class FrameBuffer {
             color = new uint32_t[w * h]();
             depth = new float[w * h]();
         }
+
+        ~FrameBuffer() {
+            if (color != nullptr) delete[] color;
+            if (depth != nullptr) delete[] depth;
+            color = nullptr;
+            depth = nullptr;
+        }
 };
 
 #endif

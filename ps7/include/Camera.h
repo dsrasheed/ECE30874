@@ -6,6 +6,7 @@
 #include "Shader.h"
 #include "Vec3.h"
 #include "Mat3.h"
+#include "Mat4.h"
 #include "Scene.h"
 #include "FrameBuffer.h"
 
@@ -20,7 +21,7 @@ class Camera {
         float asp;
         float n;
         float f;
-        FrameBuffer fb;
+        FrameBuffer* fb;
         Shader s;
         Vec3 cam_eye;
         Vec3 cam_dir;
@@ -37,6 +38,8 @@ class Camera {
         void genPerspProjMatrix();
         void genModelMatrix(const Mat3& fn, const Vec3& tr);
         void setModelColor(const Vec3& color);
+        bool frontFace(Vec3* tri);
+        unsigned int clip(Vec3* v, Vec3* n, Vec3* vp, Vec3* ps);
 
     public:
         Camera(float fov, float asp, float n, float f, Shader s);
@@ -56,7 +59,7 @@ class Camera {
         void setShadingType(ShadingType type);
         void setSpecType(SpecularType type);
         void setFrameBuffer(int w, int h);
-        const FrameBuffer& getFrameBuffer() const;
+        const FrameBuffer* getFrameBuffer() const;
         Vec3 get_eye() const;
         Vec3 get_dir() const;
         Vec3 get_up() const;

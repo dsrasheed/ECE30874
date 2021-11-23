@@ -4,10 +4,13 @@
 
 #include "util.h"
 #include "Vec4.h"
+#include "Vec3.h"
 
 Vec4::Vec4() : x(0), y(0), z(0), w(0) {}
 
 Vec4::Vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+
+Vec4::Vec4(Vec3 v, float w) : x(v.x), y(v.y), z(v.z), w(w) {}
 
 float& Vec4::operator[](int index) {
     switch (index) {
@@ -120,4 +123,8 @@ Vec4 Vec4::normalize() const {
         return Vec4();
     }
     return *this / norm;
+}
+
+Vec3 Vec4::dehomogenize() const {
+    return w == 0.0f ? Vec3(x, y, z) : Vec3(x / w, y / w, z / w);
 }

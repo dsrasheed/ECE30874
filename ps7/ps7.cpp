@@ -18,6 +18,7 @@
 #include "util.h"
 #include "Camera.h"
 #include "Scene.h"
+#include "FrameBuffer.h"
 
 // Settings
 #define SCR_WIDTH  700
@@ -35,6 +36,7 @@ Scene* scene;
 bool persp = true;
 bool flatShading = true;
 bool phong = true;
+bool gpuRender = true;
 
 void exitProgram(int signal) {
   delete cam1;
@@ -131,6 +133,9 @@ void menu(int option) {
       }
       persp = !persp;
       break;
+    case 4:
+      gpuRender = !gpuRender;
+      break;
   }
   glutPostRedisplay();
 }
@@ -141,7 +146,14 @@ void display() {
   glEnable(GL_DEPTH_TEST);
   glClear(GL_COLOR_BUFFER_BIT  | GL_DEPTH_BUFFER_BIT);
 
-  cam1->render(*scene);
+  if (gpuRender)
+    cam1->render(*scene);
+  else {
+    glUseProgram(0);
+    cam1->renderCPU(*scene);
+    const FrameBuffer* fb = cam1->getFrameBuffer();
+    glDrawPixels(fb->w, fb->h, GL_RGBA, GL_UNSIGNED_BYTE, fb->color);
+  }
 
   // Execute all commands
   glFlush();
@@ -169,7 +181,7 @@ void initGLUT(int* argc, char** argv) {
     // Cameras
     cam1_shader = new Shader("resources/shader.vs", "resources/shader.fs");
     cam1 = new Camera(argv[2], (float) SCR_WIDTH / SCR_HEIGHT, *cam1_shader);
-    //cam1->setFrameBuffer(SCR_WIDTH, SCR_HEIGHT);
+    cam1->setFrameBuffer(SCR_WIDTH, SCR_HEIGHT);
 
     // Scene
     scene = new Scene();
@@ -188,7 +200,8 @@ void initGLUT(int* argc, char** argv) {
   glutCreateMenu(menu);
   glutAddMenuEntry("Toggle Smooth/Flat Shading", 1);
   glutAddMenuEntry("Toggle Phong/Blinn Shading", 2);
-  glutAddMenuEntry("Toggle Persp/Ortho Shading", 3);
+  glutAddMenuEntry("Toggle Persp/Ortho Projection", 3);
+  glutAddMenuEntry("Toggle GPU/CPU Rendering", 4);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
 
   glutMainLoop();

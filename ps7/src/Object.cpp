@@ -9,6 +9,8 @@
 Object::Object() {
     vertices = nullptr;
     indices = nullptr;
+    smooth_verts = nullptr;
+    flat_verts = nullptr;
     smoothVa = nullptr;
     flatVa = nullptr;
     tx = nullptr;
@@ -20,6 +22,8 @@ Object::Object() {
 Object::Object(const char* filename) {
     vertices = nullptr;
     indices = nullptr;
+    smooth_verts = nullptr;
+    flat_verts = nullptr;
     smoothVa = nullptr;
     flatVa = nullptr;
     tx = nullptr;
@@ -109,9 +113,9 @@ void Object::genSmoothAndFlatVertices() {
     }
 
     unsigned int nSmoothVerts = ntris * 3;
-    float* smooth_verts = new float[nSmoothVerts * 8];
+    smooth_verts = new float[nSmoothVerts * 8];
     unsigned int nFlatVerts = ntris * 3;
-    float* flat_verts = new float[nFlatVerts * 8];
+    flat_verts = new float[nFlatVerts * 8];
     for (int i = 0; i < ntris; i++) {
         for (int j = 0; j < 3; j++) {
             unsigned int vIndex = indices[i*3+j];
@@ -148,8 +152,6 @@ void Object::genSmoothAndFlatVertices() {
 
     delete[] face_normals;
     delete[] vertex_normals;
-    delete[] smooth_verts;
-    delete[] flat_verts;
 }
 
 void Object::setMaterial(const Material& m) {
@@ -241,8 +243,16 @@ unsigned int Object::getNumTriangles() const {
     return ntris;
 }
 
-const float* Object::getVertices() const {
+/*const float* Object::getVertices() const {
     return vertices;
+}*/
+
+const float* Object::getSmoothVerts() const {
+    return smooth_verts;
+}
+
+const float* Object::getFlatVerts() const {
+    return flat_verts;
 }
 
 const unsigned int* Object::getTriangles() const {
@@ -285,6 +295,8 @@ Object::~Object() {
 void Object::reset() {
     if (vertices != nullptr) delete[] vertices;
     if (indices  != nullptr) delete[] indices;
+    if (smooth_verts != nullptr) delete[] smooth_verts;
+    if (flat_verts != nullptr) delete[] flat_verts;
     if (smoothVa != nullptr) {
         smoothVa->free();
         delete smoothVa;
@@ -299,6 +311,8 @@ void Object::reset() {
         tx = nullptr;
     }
     _hasTx = 0;
+    smooth_verts = nullptr;
+    flat_verts = nullptr;
     vertices = nullptr;
     indices = nullptr;
     smoothVa = nullptr;

@@ -9,10 +9,11 @@ run:
 	@leaks -atExit -- ./ps7 resources/scene1-7 resources/camera1-5
 
 run-linux:
+	@export MESA_GL_VERSION_OVERRIDE=3.3
 	@./ps7 resources/scene1-7 resources/camera1-5
 
 test_%:
-	-@g++ -o tmp test/$@.cpp src/*.cpp -I./include -framework OpenGL -framework GLUT -lglew
+	@g++ -o tmp test/$@.cpp src/*.cpp -I./include -framework OpenGL -framework GLUT -lglew
 	-@export MallocStackLogging=1
 	-@leaks -atExit -- ./tmp
 	@rm tmp

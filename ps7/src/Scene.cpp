@@ -46,7 +46,6 @@ void Scene::readFromFile(const char* filename) {
                 objects[i].setMaterial(m);
                 // reset
                 tx = nullptr;
-                std::cout << objects[i] << std::endl;
             }
         } catch (const std::string s) {
             delete[] objects;

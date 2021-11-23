@@ -28,7 +28,26 @@
 #include <GL/glut.h>
 #endif
 
-
+inline void boundingBox(Vec3* v, unsigned int n, double* bb)
+{
+    bb[0] = bb[2] = bb[4] = 1e10;
+    bb[1] = bb[3] = bb[5] = -1e10;
+    for (unsigned int i = 0u; i < n; ++i) {
+        Vec3& w = v[i];
+        if (w.x < bb[0])
+            bb[0] = w.x;
+        if (w.x > bb[1])
+            bb[1] = w.x;
+        if (w.y < bb[2])
+            bb[2] = w.y;
+        if (w.y > bb[3])
+            bb[3] = w.y;
+        if (w.z < bb[4])
+            bb[4] = w.z;
+        if (w.z > bb[5])
+            bb[5] = w.z;
+    }
+}
 
 Camera::Camera(float fov, float asp, float n, float f, Shader s): fov(fov), asp(asp), n(n), f(f), s(s), disp_mode(SOLID), proj_type(PERSPECTIVE), shading_type(FLAT), spec_type(PHONG) {
     lookat(Vec3(0, -40, 0), Vec3(0, 0, 0), Vec3(0, 0, 1));
@@ -105,6 +124,8 @@ void Camera::zoom(float f) {
 }
 
 // Render helpers
+// LEARN: Why is it translate then rotate?
+// Matrix multiplication is not commutative
 void Camera::genLookatMatrix() {
     s.use();
     float rotateScene[16] = {
@@ -188,18 +209,66 @@ void Camera::setSpecType(SpecularType type) {
     spec_type = type;
 }
 
+bool Camera::frontFace(Vec3* tri) {
+    Vec3 u = cam_eye - tri[1];
+    Vec3 a = tri[2] - tri[1];
+    Vec3 b = tri[0] - tri[1];
+    Vec3 n = a.cross(b);
+    return u.dot(n) > 0.0;
+}
+
 // Rendering
 void Camera::renderCPU(const Scene& scene) {
-    if (fb.w == -1 || fb.h == -1)
+    if (fb == nullptr) {
         throw "Call setFrameBuffer before calling renderCPU";
+    }
 
-    int nPixels = fb.w * fb.h;
+    int nPixels = fb->w * fb->h;
     
     // Clear
     for (int i = 0; i < nPixels; i++) {
-        fb.color[i] = RGBA(1, 1, 1).pack();
+        fb->color[i] = RGBA(0, 1, 0).pack();
     }
 
+    int nObjs = scene.getNumObjects();
+    for (int i = 0; i < nObjs; i++) {
+        const Object* obj = &scene.getObjects()[i];
+        Mat3 m = obj->getTransformMatrix();
+        Vec3 tr = obj->getTranslationVector();
+        
+        const float* data = shading_type == SMOOTH ? obj->getSmoothVerts() : obj->getFlatVerts();
+        for (int j = 0; j < obj->getNumTriangles(); j++) {
+            Vec3 v[] = {
+                Vec3(data[j*24 + 0 + 0], data[j*24 + 0 + 1], data[j*24 + 0 + 2]),
+                Vec3(data[j*24 + 8 + 0], data[j*24 + 8 + 1], data[j*24 + 8 + 2]),
+                Vec3(data[j*24 + 16 + 0], data[j*24 + 16 + 1], data[j*24 + 16 + 2])
+            };
+            Vec3 n[] = {
+                Vec3(data[j*24 + 0 + 3], data[j*24 + 0 + 4], data[j*24 + 0 + 5]),
+                Vec3(data[j*24 + 8 + 3], data[j*24 + 8 + 4], data[j*24 + 8 + 5]),
+                Vec3(data[j*24 + 16 + 3], data[j*24 + 16 + 4], data[j*24 + 16 + 5])
+            };
+            Vec3 tx[] = {
+                Vec3(data[j*24 + 0 + 6], data[j*24 + 0 + 7], 0),
+                Vec3(data[j*24 + 8 + 6], data[j*24 + 8 + 7], 0),
+                Vec3(data[j*24 + 16 + 6], data[j*24 + 16 + 7], 0)
+            };
+            for (int i = 0; i < 3; i++) {
+                v[i] = m * v[i] + tr;
+                n[i] = m * n[i];
+            }
+            if (frontFace(v)) {
+                Vec3 vp[3], ps[9];
+                unsigned int np = clip(v, n, vp, ps);
+                if (np > 0) {
+
+                }
+            }
+        }
+    }
+}
+
+unsigned int Camera::clip(Vec3* vs, Vec3* ns, Vec3* vp, Vec3* ps) {
     Mat4 rotate = Mat4(
         cam_right[0], cam_right[1], cam_right[2], 0.0,
         cam_up   [0], cam_up   [1], cam_up   [2], 0.0,
@@ -221,30 +290,22 @@ void Camera::renderCPU(const Scene& scene) {
         0, 0, (n + f) / (n - f), 2 * f * n / (n - f),
         0, 0, -1, 0
     );
-    Mat4 cache = proj * view;
-
-    int nObjs = scene.getNumObjects();
-    for (int i = 0; i < nObjs; i++) {
-        Object obj = scene.getObjects()[i];
-        Mat3 m = obj.getTransformMatrix();
-        Vec3 tr = obj.getTranslationVector();
-        Mat4 model = Mat4(
-            m[0][0], m[0][1], m[0][2], tr[0],
-            m[1][0], m[1][1], m[1][2], tr[1],
-            m[2][0], m[2][1], m[2][2], tr[2],
-            0.0    , 0.0    , 0.0    , 1.0
-        );
-        
-        Vec4* verts = new Vec4[obj.getNumVertices() * 3];
-        Vec3* norms = new Vec3[obj.getNumVertices() * 3];
-        const float* data = obj.getVertices();
-        for (int i = 0; i < obj.getNumVertices(); i++) {
-            Vec4 v = Vec4(data[i*3+0], data[i*3+1], data[i*3+2], 1.0);
-            Vec4 pos = cache * model * v;
-        }
-
-        delete[] verts;
+    Mat4 vpm = proj * view;
+    static Vec4 clipPlanes[6] = { {1.0f, 0.0f, 0.0f, -1.0f}, {-1.0f, 0.0f, 0.0f, -1.0f},
+                     {0.0f, 1.0f, 0.0f, -1.0f}, {0.0f, -1.0f, 0.0f, -1.0f},
+                     {0.0f, 0.0f, 1.0f, -1.0f}, {0.0f, 0.0f, -1.0f, -1.0f} };
+    Vec4 w[9];
+    for (unsigned int i = 0u; i < 3u; ++i) {
+        w[i] = vpm * Vec4(vs[i], 1.0f);
+        vp[i] = w[i].dehomogenize();
     }
+    double bb[6];
+    boundingBox(vp, 3, bb);
+    for (int i = 5; i >= 0; i--) {
+        std::cout << bb[i] << ", ";
+    }
+    std::cout << std::endl;
+    return 0;
 }
 
 void Camera::render(const Scene& scene) { 
@@ -347,10 +408,10 @@ void Camera::genFrustumVertices(Object& frustum) {
 }
 
 void Camera::setFrameBuffer(int w, int h) {
-    fb = FrameBuffer(w, h);
+    fb = new FrameBuffer(w, h);
 }
 
-const FrameBuffer& Camera::getFrameBuffer() const {
+const FrameBuffer* Camera::getFrameBuffer() const {
     return fb;
 }
 
@@ -390,7 +451,10 @@ Camera::ProjectionType Camera::get_proj_type() const {
     return proj_type;
 }
 
-Camera::~Camera() {}
+Camera::~Camera() {
+    if (fb != nullptr) delete fb;
+    fb = nullptr;
+}
 
 std::ostream& operator<<(std::ostream& o, const Camera& c) {
     o << "Cam Eye  : " << c.cam_eye.normalize()   << ", Norm: " << c.cam_eye.norm()   << std::endl

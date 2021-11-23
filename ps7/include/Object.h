@@ -52,7 +52,10 @@ class Object {
 
         unsigned int getNumVertices() const;
         unsigned int getNumTriangles() const;
-        const float* getVertices() const;
+        //const float* getVertices() const;
+        const float* getSmoothVerts() const;
+        const float* getFlatVerts() const;
+        const unsigned int nComponents() const;
         const unsigned int* getTriangles() const;
 
         const Mat3& getTransformMatrix() const;
