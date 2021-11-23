@@ -9,7 +9,6 @@ run:
 	@leaks -atExit -- ./ps7 resources/scene1-7 resources/camera1-5
 
 run-linux:
-	@export MESA_GL_VERSION_OVERRIDE=3.3
 	@./ps7 resources/scene1-7 resources/camera1-5
 
 test_%:

@@ -46,6 +46,10 @@ Vec3 operator*(const float scalar, const Vec3& v) {
     return Vec3(v.x * scalar, v.y * scalar, v.z * scalar);
 }
 
+Vec3 operator*(const Vec3& v1, const Vec3& v2) {
+    return Vec3(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
+}
+
 Vec3& operator*=(Vec3& v, const float scalar) {
     v.x *= scalar;
     v.y *= scalar;

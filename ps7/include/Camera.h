@@ -8,7 +8,9 @@
 #include "Mat3.h"
 #include "Mat4.h"
 #include "Scene.h"
+#include "Object.h"
 #include "FrameBuffer.h"
+#include "rgba.h"
 
 class Camera {
     public:
@@ -40,7 +42,11 @@ class Camera {
         void setModelColor(const Vec3& color);
         bool frontFace(Vec3* tri);
         unsigned int clip(Vec3* v, Vec3* n, Vec3* vp, Vec3* ps);
-
+        float cameraZ(float d) const;
+        Vec3 hyperbolic(Vec3* v, Vec3* vp, float k1, float k2, float k3) const;
+        RGBA lighting(const Vec3& ve, const Vec3& no, int nl, Light* ls, const Material& m) const;
+        void drawPixel(Vec3* vs, Vec3* ns, Vec3* vp, int nl, Light* ls, const Material& m, const Vec3& pc, unsigned int i, unsigned int j);
+        void drawFilled(Vec3* vs, Vec3* ns, Vec3* vp, unsigned int np, Vec3* ps, int nl, Light* ls, const Material& m);
     public:
         Camera(float fov, float asp, float n, float f, Shader s);
         Camera(const char* filename, float asp, Shader s);

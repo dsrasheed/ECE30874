@@ -49,6 +49,28 @@ inline void boundingBox(Vec3* v, unsigned int n, double* bb)
     }
 }
 
+inline bool leftTurnXY(const Vec3& a, const Vec3& b, const Vec3& c)
+{
+    float ux = c.x - b.x, uy = c.y - b.y, vx = a.x - b.x, vy = a.y - b.y;
+    return ux * vy - uy * vx >= 0.0f;
+}
+
+inline bool inTriangleXY(const Vec3& p, const Vec3& a, const Vec3& b, const Vec3& c,
+    bool ccw)
+{
+    return leftTurnXY(a, b, p) == ccw && leftTurnXY(b, c, p) == ccw &&
+        leftTurnXY(c, a, p) == ccw;
+}
+
+inline void barycentricCoordinates(const Vec3& a, const Vec3& b, const Vec3& c,
+    const Vec3& p, float& k1, float& k2, float& k3)
+{
+    float d = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
+    k1 = ((b.y - c.y) * (p.x - c.x) + (c.x - b.x) * (p.y - c.y)) / d;
+    k2 = ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) / d;
+    k3 = 1.0f - k1 - k2;
+}
+
 Camera::Camera(float fov, float asp, float n, float f, Shader s): fov(fov), asp(asp), n(n), f(f), s(s), disp_mode(SOLID), proj_type(PERSPECTIVE), shading_type(FLAT), spec_type(PHONG) {
     lookat(Vec3(0, -40, 0), Vec3(0, 0, 0), Vec3(0, 0, 1));
     genProjectionMatrix();
@@ -227,7 +249,10 @@ void Camera::renderCPU(const Scene& scene) {
     
     // Clear
     for (int i = 0; i < nPixels; i++) {
-        fb->color[i] = RGBA(0, 1, 0).pack();
+        fb->color[i] = RGBA(1, 1, 1).pack();
+    }
+    for (int i = 0; i < nPixels; i++) {
+        fb->depth[i] = 1.0;
     }
 
     int nObjs = scene.getNumObjects();
@@ -261,7 +286,7 @@ void Camera::renderCPU(const Scene& scene) {
                 Vec3 vp[3], ps[9];
                 unsigned int np = clip(v, n, vp, ps);
                 if (np > 0) {
-
+                    drawFilled(v, n, vp, np, ps, scene.getNumLights(), scene.getLights(), obj->getMaterial());
                 }
             }
         }
@@ -301,11 +326,101 @@ unsigned int Camera::clip(Vec3* vs, Vec3* ns, Vec3* vp, Vec3* ps) {
     }
     double bb[6];
     boundingBox(vp, 3, bb);
-    for (int i = 5; i >= 0; i--) {
-        std::cout << bb[i] << ", ";
+    if (bb[0] > 1.0f || bb[1] < -1.0f || bb[2] > 1.0f || bb[3] < -1.0f ||
+        bb[4] > 1.0f || bb[5] < -1.0f)
+        return 0u;
+    unsigned int k = 3u;
+    if (bb[0] < -1.0f || bb[1] > 1.0f || bb[2] < -1.0f || bb[3] > 1.0f ||
+        bb[4] < -1.0f || bb[5] > 1.0f) {
+        bool in[9];
+        Vec4 nw[9];
+        for (unsigned int i = 0u; i < 6u; ++i) {
+            bool allin = true;
+            for (unsigned int j = 0u; j < k; ++j) {
+                in[j] = clipPlanes[i].dot(w[j]) <= 0.0f;
+                allin = allin && in[j];
+            }
+            if (!allin) {
+                unsigned int nk = 0u;
+                for (unsigned int j = 0u; j < k; ++j) {
+                    if (in[j])
+                        nw[nk++] = w[j];
+                    if (in[j] != in[(j + 1) % k]) {
+                        Vec4 u(w[(j + 1) % k] - w[j]);
+                        nw[nk++] = w[j] - u * (clipPlanes[i].dot(w[j]) / clipPlanes[i].dot(u));
+                    }
+                }
+                for (unsigned int j = 0u; j < nk; ++j)
+                    w[j] = nw[j];
+                k = nk;
+            }
+        }
     }
-    std::cout << std::endl;
-    return 0;
+    for (unsigned int i = 0u; i < k; ++i)
+        ps[i] = w[i].dehomogenize();
+    return k;
+}
+
+void Camera::drawFilled(Vec3* vs, Vec3* ns, Vec3* vp, unsigned int np, Vec3* ps, int nl,
+    Light* ls, const Material& m) {
+    bool ccw = leftTurnXY(ps[0], ps[1], ps[2]);
+    Vec3 a = ps[0];
+    for (unsigned int k = 1u; k + 1u < np; ++k) {
+        Vec3 b = ps[k], c = ps[k + 1];
+        unsigned int bb[4];
+        fb->pixelBox(a, b, c, bb);
+        for (unsigned int i = bb[0]; i <= bb[1]; ++i)
+            for (unsigned int j = bb[2]; j <= bb[3]; ++j) {
+                Vec3 pc = fb->pixelCenter(i, j);
+                if (inTriangleXY(pc, a, b, c, ccw)) {
+                    drawPixel(vs, ns, vp, nl, ls, m, pc, i, j);
+                }
+            }
+    }
+}
+
+void Camera::drawPixel(Vec3* vs, Vec3* ns, Vec3* vp, int nl, Light* ls, const Material& m,
+    const Vec3& pc, unsigned int i, unsigned int j) {
+    float k1, k2, k3;
+    barycentricCoordinates(vp[0], vp[1], vp[2], pc, k1, k2, k3);
+    float dij = k1 * vp[0].z + k2 * vp[1].z + k3 * vp[2].z;
+    if (fb->setDepth(i, j, dij)) {
+        Vec3 vij = hyperbolic(vs, vp, k1, k2, k3);
+        Vec3 nij = hyperbolic(ns, vp, k1, k2, k3);
+        unsigned int cij = lighting(vij, nij, nl, ls, m).pack();
+        fb->color[i + j * fb->w] = cij;
+    }
+}
+
+Vec3 Camera::hyperbolic(Vec3* v, Vec3* vp, float k1, float k2, float k3) const {
+    if (proj_type == ORTHO)
+        return v[0] * k1 + v[1] * k2 + v[2] * k3;
+    float z1 = cameraZ(vp[0].z), z2 = cameraZ(vp[1].z), z3 = cameraZ(vp[2].z),
+        l1 = k1 / z1, l2 = k2 / z2, l3 = k3 / z3, d = l1 + l2 + l3,
+        m1 = l1 / d, m2 = l2 / d, m3 = l3 / d;
+    return v[0] * m1 + v[1] * m2 + v[2]* m3;
+}
+
+float Camera::cameraZ(float d) const {
+        return 2.0f * f * n / ((f - n) * d - f - n);
+}
+
+RGBA Camera::lighting(const Vec3& ve, const Vec3& no, int nl, Light* ls, const Material& m) const {
+    Vec3 n = no.normalize(), v = (cam_eye - ve).normalize(), c(0.0f, 0.0f, 0.0f);
+    for (int i = 0u; i < nl; ++i) {
+        const Light& li = ls[i];
+        c = c + li.a * m.d;
+        Vec3 ll = li.dir ? li.p : li.p - ve;
+        if (ll.dot(n) > 0.0f) {
+            float d = ll.norm(),
+                k = li.dir ? 1.0f : 1.0f / (1.0f + li.kl * d + li.kq * d * d);
+            Vec3 l = ll / d, h = (l + v).normalize();
+            c = c + li.d * m.d * n.dot(l) * k;
+            float nh = n.dot(h);
+            c = c + li.s * m.s * pow(nh, m.shininess) * k;
+        }
+    }
+    return RGBA(c.x, c.y, c.z).pack();
 }
 
 void Camera::render(const Scene& scene) { 

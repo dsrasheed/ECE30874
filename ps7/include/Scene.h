@@ -24,7 +24,7 @@ class Scene {
         int getNumObjects() const;
         int getNumLights() const;
         const Object* getObjects() const;
-        const Light* getLights() const;
+        Light* getLights() const;
         
         ~Scene();
 };

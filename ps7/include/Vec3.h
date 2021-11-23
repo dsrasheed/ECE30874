@@ -24,6 +24,8 @@ class Vec3 {
 
     friend Vec3 operator*(const float scalar, const Vec3& v);
 
+    friend Vec3 operator*(const Vec3& v1, const Vec3& v2);
+
     friend Vec3& operator*=(Vec3& v, const float scalar);
 
     friend Vec3 operator/(const Vec3& v, const float scalar);

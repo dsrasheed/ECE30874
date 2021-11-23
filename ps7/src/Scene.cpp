@@ -109,7 +109,7 @@ const Object* Scene::getObjects() const {
     return objects;
 }
 
-const Light* Scene::getLights() const {
+Light* Scene::getLights() const {
     return lights;
 }
 

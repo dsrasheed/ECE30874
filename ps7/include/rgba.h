@@ -1,3 +1,6 @@
+#ifndef __ECE30834_RGBA_H__
+#define __ECE30834_RGBA_H__
+
 class RGBA {
  public:
   static unsigned char floatToByte (float x) {
@@ -32,3 +35,5 @@ class RGBA {
     return RGBA(b[0], b[1], b[2], b[3]);
   }
 };
+
+#endif
