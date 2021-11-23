@@ -286,7 +286,7 @@ void Camera::renderCPU(const Scene& scene) {
                 Vec3 vp[3], ps[9];
                 unsigned int np = clip(v, n, vp, ps);
                 if (np > 0) {
-                    drawFilled(v, n, vp, np, ps, scene.getNumLights(), scene.getLights(), obj->getMaterial());
+                    drawFilled(v, n, vp, np, ps, scene.getNumLights(), scene.getLights(), obj->getMaterial(), obj->getTexture());
                 }
             }
         }
@@ -362,7 +362,7 @@ unsigned int Camera::clip(Vec3* vs, Vec3* ns, Vec3* vp, Vec3* ps) {
 }
 
 void Camera::drawFilled(Vec3* vs, Vec3* ns, Vec3* vp, unsigned int np, Vec3* ps, int nl,
-    Light* ls, const Material& m) {
+    Light* ls, const Material& m, const Texture& tx) {
     bool ccw = leftTurnXY(ps[0], ps[1], ps[2]);
     Vec3 a = ps[0];
     for (unsigned int k = 1u; k + 1u < np; ++k) {
@@ -384,11 +384,15 @@ void Camera::drawPixel(Vec3* vs, Vec3* ns, Vec3* vp, int nl, Light* ls, const Ma
     float k1, k2, k3;
     barycentricCoordinates(vp[0], vp[1], vp[2], pc, k1, k2, k3);
     float dij = k1 * vp[0].z + k2 * vp[1].z + k3 * vp[2].z;
+    // float f = tx.getF();
     if (fb->setDepth(i, j, dij)) {
         Vec3 vij = hyperbolic(vs, vp, k1, k2, k3);
         Vec3 nij = hyperbolic(ns, vp, k1, k2, k3);
+        // Vec3 tij = hyperbolic(ts, vp, k1, k2, k3);
         unsigned int cij = lighting(vij, nij, nl, ls, m).pack();
+        unsigned int tij = 0; // texturing(tx, txij);
         fb->color[i + j * fb->w] = cij;
+        //fb->color[i + j * fb->w] = f * tij + (1-f) * cij;
     }
 }
 
@@ -420,6 +424,7 @@ RGBA Camera::lighting(const Vec3& ve, const Vec3& no, int nl, Light* ls, const M
             c = c + li.s * m.s * pow(nh, m.shininess) * k;
         }
     }
+    c = c.raiseTo(1.0/2.2);
     return RGBA(c.x, c.y, c.z).pack();
 }
 

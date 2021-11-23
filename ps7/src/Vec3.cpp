@@ -112,6 +112,10 @@ float Vec3::norm() const {
     return sqrt(pow(x,2) + pow(y,2) + pow(z,2));
 }
 
+Vec3 Vec3::raiseTo(float exp) const {
+    return Vec3(pow(x, exp), pow(y, exp), pow(z, exp));
+}
+
 Vec3 Vec3::normalize() const {
     float norm = this->norm();
     if (nearlyEqual(norm, 0.0)) {

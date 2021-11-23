@@ -50,6 +50,8 @@ class Vec3 {
 
     float norm() const;
 
+    Vec3 raiseTo(float exp) const;
+
     Vec3 normalize() const;
 
     // BUG: Only works on declared Vec3, not ones computed in expressions
