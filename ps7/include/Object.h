@@ -24,7 +24,8 @@ class Object {
         VertexArray* flatVa;
         float* smooth_verts;
         float* flat_verts;
-        Texture tx;
+        bool _hasTx;
+        Texture* tx;
 
         void reset();
         void genSmoothAndFlatVertices();
@@ -41,13 +42,13 @@ class Object {
 
         void setMaterial(const Material& mat);
         
-        void setTexture(const Texture& tx);
+        void setTexture(Texture* tx);
 
         void setTransformationMatrix(const Mat3& m, const Vec3& v);
 
         friend std::ostream& operator<<(std::ostream& o, const Object& obj);
 
-        Object& operator=(const Object& o);
+        //Object& operator=(const Object& o);
 
         unsigned int getNumVertices() const;
         unsigned int getNumTriangles() const;
@@ -60,6 +61,7 @@ class Object {
         const Texture& getTexture() const;
         const VertexArray& getSmoothVa() const;
         const VertexArray& getFlatVa() const;
+        const bool hasTx() const;
 
         ~Object();
 };

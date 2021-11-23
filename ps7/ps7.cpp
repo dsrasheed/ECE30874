@@ -18,7 +18,6 @@
 #include "util.h"
 #include "Camera.h"
 #include "Scene.h"
-#include "VertexArray.h"
 
 // Settings
 #define SCR_WIDTH  700
@@ -139,6 +138,7 @@ void menu(int option) {
 void display() {
   // Render to custom framebuffer
   glClearColor(1.0, 1.0, 1.0, 1.0);
+  glEnable(GL_DEPTH_TEST);
   glClear(GL_COLOR_BUFFER_BIT  | GL_DEPTH_BUFFER_BIT);
 
   cam1->render(*scene);
@@ -150,18 +150,18 @@ void display() {
 
 void initGLUT(int* argc, char** argv) {
   if (*argc != 3) {
-    std::cout << "Usage: ps6 scene-file camera-file" << std::endl;
+    std::cout << "Usage: ps7 scene-file camera-file" << std::endl;
     return;
   }
 
   glutInit(argc, argv);
   #ifdef __APPLE__
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_3_2_CORE_PROFILE);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_3_2_CORE_PROFILE);
   #else
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
   #endif
   glutInitWindowSize(SCR_WIDTH, SCR_HEIGHT);
-  glutCreateWindow("ECE 30834 PS6 - drasheed");
+  glutCreateWindow("ECE 30834 PS7 - drasheed");
   if (glewInit() != GLEW_OK) exit(0);
 
   // initialize objects
@@ -169,7 +169,7 @@ void initGLUT(int* argc, char** argv) {
     // Cameras
     cam1_shader = new Shader("resources/shader.vs", "resources/shader.fs");
     cam1 = new Camera(argv[2], (float) SCR_WIDTH / SCR_HEIGHT, *cam1_shader);
-    cam1->setFrameBuffer(SCR_WIDTH, SCR_HEIGHT);
+    //cam1->setFrameBuffer(SCR_WIDTH, SCR_HEIGHT);
 
     // Scene
     scene = new Scene();

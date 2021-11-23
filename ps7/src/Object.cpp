@@ -11,6 +11,8 @@ Object::Object() {
     indices = nullptr;
     smoothVa = nullptr;
     flatVa = nullptr;
+    tx = nullptr;
+    _hasTx = 0;
     nverts = 0;
     ntris = 0;
 }
@@ -20,8 +22,10 @@ Object::Object(const char* filename) {
     indices = nullptr;
     smoothVa = nullptr;
     flatVa = nullptr;
+    tx = nullptr;
     nverts = 0;
     ntris = 0;
+    _hasTx = 0;
     readFromFile(filename);
 }
 
@@ -29,15 +33,19 @@ void Object::readFromFile(const char* filename) {
     reset();
 
     std::ifstream f(filename);
-    int random0;
     if (f.is_open()) {
         f >> nverts;
         f >> ntris;
-        f >> random0;
+        f >> _hasTx;
 
-        vertices = new float[nverts * 3];
-        for (int i = 0; i < nverts * 3; i++) {
-            f >> vertices[i];
+        vertices = new float[nverts * 5];
+        for (int i = 0; i < nverts * 5; i++) {
+            if (!_hasTx && (i % 5 > 2)) {
+                vertices[i] = 0;
+            }
+            else {
+                f >> vertices[i];
+            }
         }
 
         indices = new unsigned int[ntris * 3];
@@ -60,8 +68,8 @@ void Object::setVertices(int nverts, const float* verts, int ntris, const unsign
     this->nverts = nverts;
     this->ntris = ntris;
 
-    vertices = new float[nverts * 3];
-    for (int i = 0; i < nverts * 3; i++) {
+    vertices = new float[nverts * 5];
+    for (int i = 0; i < nverts * 5; i++) {
         vertices[i] = verts[i];
     }
 
@@ -80,9 +88,9 @@ void Object::genSmoothAndFlatVertices() {
 
     Vec3* face_normals = new Vec3[ntris];
     for (int i = 0; i < ntris; i++) {
-        float* vA = &vertices[indices[i*3+0]*3];
-        float* vB = &vertices[indices[i*3+1]*3];
-        float* vC = &vertices[indices[i*3+2]*3];
+        float* vA = &vertices[indices[i*3+0]*5];
+        float* vB = &vertices[indices[i*3+1]*5];
+        float* vC = &vertices[indices[i*3+2]*5];
         Vec3 u = Vec3(vB[0] - vA[0], vB[1] - vA[1], vB[2] - vA[2]);
         Vec3 v = Vec3(vC[0] - vA[0], vC[1] - vA[1], vC[2] - vA[2]);
         Vec3 n = u.cross(v);
@@ -101,37 +109,42 @@ void Object::genSmoothAndFlatVertices() {
     }
 
     unsigned int nSmoothVerts = ntris * 3;
-    float* smooth_verts = new float[nSmoothVerts * 6];
+    float* smooth_verts = new float[nSmoothVerts * 8];
     unsigned int nFlatVerts = ntris * 3;
-    float* flat_verts = new float[nFlatVerts * 6];
+    float* flat_verts = new float[nFlatVerts * 8];
     for (int i = 0; i < ntris; i++) {
         for (int j = 0; j < 3; j++) {
             unsigned int vIndex = indices[i*3+j];
-            unsigned int base = i*6*3 + j*6;
-            smooth_verts[base+0] = vertices[vIndex*3+0];
-            smooth_verts[base+1] = vertices[vIndex*3+1];
-            smooth_verts[base+2] = vertices[vIndex*3+2];
+            unsigned int base = i*8*3 + j*8;
+            smooth_verts[base+0] = vertices[vIndex*5+0];
+            smooth_verts[base+1] = vertices[vIndex*5+1];
+            smooth_verts[base+2] = vertices[vIndex*5+2];
             smooth_verts[base+3] = vertex_normals[vIndex].x;
             smooth_verts[base+4] = vertex_normals[vIndex].y;
             smooth_verts[base+5] = vertex_normals[vIndex].z;
-            flat_verts[base+0] = vertices[vIndex*3+0];
-            flat_verts[base+1] = vertices[vIndex*3+1];
-            flat_verts[base+2] = vertices[vIndex*3+2];
+            flat_verts[base+0] = vertices[vIndex*5+0];
+            flat_verts[base+1] = vertices[vIndex*5+1];
+            flat_verts[base+2] = vertices[vIndex*5+2];
             flat_verts[base+3] = face_normals[i].x;
             flat_verts[base+4] = face_normals[i].y;
             flat_verts[base+5] = face_normals[i].z;
+            if (_hasTx) {
+                smooth_verts[base+6] = vertices[vIndex*5+3];
+                smooth_verts[base+7] = vertices[vIndex*5+4];
+                flat_verts[base+6] = vertices[vIndex*5+3];
+                flat_verts[base+7] = vertices[vIndex*5+4];
+            }
+            else {
+                smooth_verts[base+6] = 0;
+                smooth_verts[base+7] = 0;
+                flat_verts[base+6] = 0;
+                flat_verts[base+7] = 0;
+            }
         }
     }
 
-    smoothVa = new VertexArray(nSmoothVerts, smooth_verts);
-    flatVa = new VertexArray(nFlatVerts, flat_verts);
-
-    /*std::cout << "Smooth VA" << std::endl;
-    std::cout << "=========" << std::endl;
-    print_verts(nSmoothVerts, smooth_verts);
-    std::cout << "Flat VA" << std::endl;
-    std::cout << "=========" << std::endl;
-    print_verts(nFlatVerts, flat_verts);*/
+    smoothVa = new VertexArray8(nSmoothVerts, smooth_verts);
+    flatVa   = new VertexArray8(nFlatVerts, flat_verts);
 
     delete[] face_normals;
     delete[] vertex_normals;
@@ -143,8 +156,10 @@ void Object::setMaterial(const Material& m) {
     this->m = m;
 }
 
-void Object::setTexture(const Texture& tx) {
+void Object::setTexture(Texture* tx) {
+    if (this->tx != nullptr) this->tx->free();
     this->tx = tx;
+    _hasTx = 1;
 }
 
 void Object::setTransformationMatrix(const Mat3& m, const Vec3& v) {
@@ -168,10 +183,21 @@ std::ostream& operator<<(std::ostream& o, const Object& obj) {
     o << obj.tr << std::endl;
     o << std::endl;
 
+    if (obj._hasTx) 
+    {
+    o << "Texture" << std::endl;
+    o << "-------" << std::endl;
+    o << *obj.tx;
+    o << std::endl;
+    }
+
     o << "# Vertices: " << obj.nverts << std::endl;
     o << "----------------" << std::endl;
-    for (int i = 0; i < obj.nverts * 3; i += 3) {
-        o << "(" << obj.vertices[i] << ", " << obj.vertices[i+1] << ", " << obj.vertices[i+2] << ")" << std::endl;
+    for (int i = 0; i < obj.nverts * 5; i++) {
+        if (i % 5 == 0) o << "(";
+        o << obj.vertices[i];
+        if (i % 5 < 4) o << ", ";
+        else o << ")" << std::endl;
     }
     o << std::endl;
 
@@ -186,7 +212,7 @@ std::ostream& operator<<(std::ostream& o, const Object& obj) {
     return o;
 }
 
-Object& Object::operator=(const Object& other) {
+/*Object& Object::operator=(const Object& other) {
     reset();
 
     if (other.vertices != nullptr && other.indices != nullptr) {
@@ -205,7 +231,7 @@ Object& Object::operator=(const Object& other) {
         genSmoothAndFlatVertices();
     }
     return *this;
-}
+}*/
 
 unsigned int Object::getNumVertices() const {
     return nverts;
@@ -232,7 +258,8 @@ const Vec3& Object::getTranslationVector() const {
 }
 
 const Texture& Object::getTexture() const {
-    return tx;
+    if (!_hasTx) throw "Texture not initialized";
+    return *tx;
 }
 
 const Material& Object::getMaterial() const {
@@ -245,6 +272,10 @@ const VertexArray& Object::getSmoothVa() const {
 
 const VertexArray& Object::getFlatVa() const {
     return *flatVa;
+}
+
+const bool Object::hasTx() const {
+    return _hasTx;
 }
 
 Object::~Object() {
@@ -262,10 +293,17 @@ void Object::reset() {
         flatVa->free();
         delete flatVa;
     }
+    if (_hasTx) {
+        tx->free();
+        delete tx;
+        tx = nullptr;
+    }
+    _hasTx = 0;
     vertices = nullptr;
     indices = nullptr;
     smoothVa = nullptr;
     flatVa = nullptr;
+    tx = nullptr;
     nverts = 0;
     ntris = 0;
 }
