@@ -286,7 +286,7 @@ void Camera::renderCPU(const Scene& scene) {
                 Vec3 vp[3], ps[9];
                 unsigned int np = clip(v, n, vp, ps);
                 if (np > 0) {
-                    drawFilled(v, n, vp, np, ps, scene.getNumLights(), scene.getLights(), obj->getMaterial(), obj->getTexture());
+                    drawFilled(v, n, vp, np, ps, scene.getNumLights(), scene.getLights(), obj->getMaterial());
                 }
             }
         }
@@ -362,7 +362,7 @@ unsigned int Camera::clip(Vec3* vs, Vec3* ns, Vec3* vp, Vec3* ps) {
 }
 
 void Camera::drawFilled(Vec3* vs, Vec3* ns, Vec3* vp, unsigned int np, Vec3* ps, int nl,
-    Light* ls, const Material& m, const Texture& tx) {
+    Light* ls, const Material& m) {
     bool ccw = leftTurnXY(ps[0], ps[1], ps[2]);
     Vec3 a = ps[0];
     for (unsigned int k = 1u; k + 1u < np; ++k) {
@@ -379,6 +379,12 @@ void Camera::drawFilled(Vec3* vs, Vec3* ns, Vec3* vp, unsigned int np, Vec3* ps,
     }
 }
 
+// Add Texture pointer
+// Add texture coordinates of triangle
+// sample method
+// if swrap
+//  separate integer and floating point components
+//  
 void Camera::drawPixel(Vec3* vs, Vec3* ns, Vec3* vp, int nl, Light* ls, const Material& m,
     const Vec3& pc, unsigned int i, unsigned int j) {
     float k1, k2, k3;
